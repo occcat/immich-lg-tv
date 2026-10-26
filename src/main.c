@@ -260,6 +260,10 @@ int main(int argc, char **argv) {
             if (elapsed < (uint32_t)json_integer(step, "at", 0))
                 break;
             qa_key(&app, json_text(step, "key"));
+            cJSON *pointer = cJSON_GetObjectItem(step, "pointer");
+            if (cJSON_IsObject(pointer))
+                ui_pointer(&app, json_integer(pointer, "x", 0), json_integer(pointer, "y", 0),
+                           cJSON_IsTrue(cJSON_GetObjectItem(pointer, "click")));
             const char *shot = json_text(step, "capture");
             if (*shot) {
                 ui_draw(&app, now);

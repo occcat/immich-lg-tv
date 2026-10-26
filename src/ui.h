@@ -25,12 +25,14 @@ typedef struct {
     SDL_Texture *texture;
     SDL_Rect ink;
     int w, h;
+    int fitted_width;
+    char fitted[640];
     uint32_t used;
 } TextSlot;
 typedef struct {
     SDL_Window *window;
     SDL_Renderer *renderer;
-    SDL_Texture *shade_horizontal, *shade_vertical;
+    SDL_Texture *shade_vertical;
     SDL_Texture *icons[ICON_COUNT];
     ShapeSlot shapes[40];
     TTF_Font *fonts[8];
