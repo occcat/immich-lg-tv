@@ -1,0 +1,9 @@
+build/
+.venv/
+dist/
+.local/
+fixtures/media/*
+!fixtures/media/.gitkeep
+__pycache__/
+*.pyc
+*.local.json

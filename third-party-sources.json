@@ -1,0 +1,19 @@
+{
+  "ffmpeg": {
+    "version": "9.0.2",
+    "archive": {
+      "name": "ffmpeg-9.0.2.tar.xz",
+      "url": "https://github.com/GLinnik21/plx-native/releases/download/v0.9.0/ffmpeg-9.0.2.tar.xz",
+      "sha256": "8c3850283eb25fa026482078a04051e0be17347b09ef81a0849bec15a96e002e"
+    },
+    "build_script": {
+      "name": "build-ffmpeg.sh",
+      "url": "https://github.com/GLinnik21/plx-native/releases/download/v0.9.0/build-ffmpeg.sh",
+      "sha256": "54b881bff89acc126c31f93c4fcda05feeb9309ed5c68efa88dfc1416f51a471"
+    },
+    "library_source_ipk": {
+      "url": "https://github.com/GLinnik21/plx-native/releases/download/v0.9.0/com.beb.plxnative_0.9.0_arm.ipk",
+      "sha256": "d6bc601667a25d0c7dbb13ea95efb0f065f481ab46f9391960687220c7557c30"
+    }
+  }
+}
