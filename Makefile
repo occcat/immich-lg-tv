@@ -5,7 +5,7 @@ SDK ?= $(HOME)/webos-ndk/arm-webos-linux-gnueabi_sdk-buildroot
 SYSROOT := $(SDK)/arm-webos-linux-gnueabi/sysroot
 ARM_CC := $(SDK)/bin/arm-webos-linux-gnueabi-gcc
 COMMON := -std=c11 -D_GNU_SOURCE -O2 -Wall -Wextra -Werror -Wno-deprecated-declarations -Isrc -Ivendor
-SOURCES := src/core.c src/api.c src/worker.c src/proxy.c src/demux.c src/media.c src/media-webos.c src/ui.c src/main.c vendor/cJSON.c
+SOURCES := src/core.c src/api.c src/worker.c src/proxy.c src/demux.c src/media.c src/media-webos.c src/vector.c src/ui-paint.c src/ui.c src/main.c vendor/cJSON.c
 HOST_FLAGS := $(shell pkg-config --cflags sdl2 SDL2_ttf SDL2_image libavformat libavcodec libavutil)
 HOST_LIBS := $(shell pkg-config --libs sdl2 SDL2_ttf SDL2_image libavformat libavcodec libavutil) -lpthread -lm
 ARM_FLAGS := --sysroot=$(SYSROOT) -I$(SYSROOT)/usr/include/SDL2 -Ivendor/ffmpeg -DWEBOS -tno-glibc-polyfill

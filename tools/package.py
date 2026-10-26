@@ -16,18 +16,23 @@ VERSION = "0.1.0"
 def icon():
     width = height = 160
     colors = [(95, 152, 255), (127, 124, 244), (232, 114, 156), (240, 173, 95), (106, 199, 174)]
-    import math
+    # Match assets/icons/brand.svg. Supersample the launcher bitmap too: webOS
+    # appinfo requires PNG, while the in-app source remains a vector asset.
+    circles = [(32, 17, 15), (47, 28, 15), (41, 46, 15), (23, 46, 15), (17, 28, 15)]
     pixels = []
     for y in range(height):
         row = bytearray([0])
         for x in range(width):
-            c = (13, 20, 32)
-            for i, color in enumerate(colors):
-                angle = i * math.tau / 5 - math.pi / 2
-                cx, cy = 80 + math.cos(angle) * 32, 80 + math.sin(angle) * 32
-                if (x-cx)**2 + (y-cy)**2 < 25**2: c = color
-            if (x-80)**2 + (y-80)**2 < 12**2: c = (13, 20, 32)
-            row.extend(c)
+            samples = []
+            for sy in range(4):
+                for sx in range(4):
+                    px, py = (x + (sx+.5)/4 - 16)/2, (y + (sy+.5)/4 - 16)/2
+                    c = (13, 20, 32)
+                    for (cx, cy, radius), color in zip(circles, colors):
+                        if (px-cx)**2 + (py-cy)**2 < radius**2: c = color
+                    if (px-32)**2 + (py-32)**2 < 8**2: c = (13, 20, 32)
+                    samples.append(c)
+            row.extend(round(sum(c[i] for c in samples)/16) for i in range(3))
         pixels.append(row)
     def chunk(name, data):
         return struct.pack(">I", len(data)) + name + data + struct.pack(">I", zlib.crc32(name + data))

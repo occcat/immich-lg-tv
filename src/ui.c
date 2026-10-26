@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "media.h"
+#include "ui-paint.h"
 #include <SDL_image.h>
 #include <math.h>
 #include <stdio.h>
@@ -9,7 +10,7 @@
 
 static const SDL_Color WHITE = {241, 244, 250, 255}, MUTED = {143, 157, 178, 255},
                        BLUE = {133, 174, 255, 255}, BG = {10, 15, 24, 255};
-static const int sizes[] = {16, 20, 24, 28, 34, 44, 56, 72};
+static const int sizes[] = {18, 22, 26, 30, 36, 44, 56, 72};
 static const char *names[] = {"照片", "相册", "收藏", "视频", "连接设置"};
 static const char *subtitles[] = {"那些平凡的日子，也值得好好收藏。",
                                   "把每一段故事，放进它的相册。", "你曾经标记的喜欢，都在这里。",
@@ -23,23 +24,10 @@ static void fill(App *a, int x, int y, int w, int h, SDL_Color color) {
     SDL_RenderFillRect(a->renderer, &r);
 }
 static void round_box(App *a, int x, int y, int w, int h, int radius, SDL_Color color) {
-    fill(a, x + radius, y, w - 2 * radius, h, color);
-    fill(a, x, y + radius, radius, h - 2 * radius, color);
-    fill(a, x + w - radius, y + radius, radius, h - 2 * radius, color);
-    SDL_SetRenderDrawColor(a->renderer, color.r, color.g, color.b, color.a);
-    for (int i = 0; i < radius; i++) {
-        int z = (int)sqrt(radius * radius - (radius - i) * (radius - i));
-        SDL_RenderDrawLine(a->renderer, x + radius - z, y + i, x + w - radius + z - 1, y + i);
-        SDL_RenderDrawLine(a->renderer, x + radius - z, y + h - i - 1, x + w - radius + z - 1,
-                           y + h - i - 1);
-    }
+    paint_round(a, (SDL_Rect){x, y, w, h}, radius, color);
 }
 static void outline(App *a, SDL_Rect r, SDL_Color c, int width) {
-    SDL_SetRenderDrawColor(a->renderer, c.r, c.g, c.b, c.a);
-    for (int i = 0; i < width; i++) {
-        SDL_Rect b = {r.x - i, r.y - i, r.w + 2 * i, r.h + 2 * i};
-        SDL_RenderDrawRect(a->renderer, &b);
-    }
+    paint_ring(a, r, r.w > 500 ? 12 : 20, width, c);
 }
 static TextSlot *text_slot(App *a, const char *s, int size, SDL_Color c) {
     if (!s || !*s)
@@ -72,6 +60,27 @@ static TextSlot *text_slot(App *a, const char *s, int size, SDL_Color c) {
     slot->texture = SDL_CreateTextureFromSurface(a->renderer, surface);
     slot->w = surface->w;
     slot->h = surface->h;
+    int left = surface->w, top = surface->h, right = -1, bottom = -1;
+    for (int y = 0; y < surface->h; ++y)
+        for (int x = 0; x < surface->w; ++x) {
+            Uint8 red, green, blue, alpha;
+            Uint32 pixel =
+                *(Uint32 *)((unsigned char *)surface->pixels + y * surface->pitch + x * 4);
+            SDL_GetRGBA(pixel, surface->format, &red, &green, &blue, &alpha);
+            if (alpha >= 8) {
+                if (x < left)
+                    left = x;
+                if (x > right)
+                    right = x;
+                if (y < top)
+                    top = y;
+                if (y > bottom)
+                    bottom = y;
+            }
+        }
+    slot->ink = (SDL_Rect){left, top, right - left + 1, bottom - top + 1};
+    if (right < left)
+        slot->ink = (SDL_Rect){0, 0, surface->w, surface->h};
     SDL_FreeSurface(surface);
     copy_text(slot->text, sizeof slot->text, s);
     slot->size = size;
@@ -88,6 +97,19 @@ static void text(App *a, const char *s, int x, int y, int size, SDL_Color c, int
         dest.w = src.w = max_width;
     }
     SDL_RenderCopy(a->renderer, t->texture, &src, &dest);
+}
+/* Align visible glyphs, not the font's ascent/descent padding. Alignment is
+   shared by buttons, badges, navigation, fields, captions and keyboard keys. */
+static void text_box(App *a, const char *s, SDL_Rect box, int size, SDL_Color c, int align) {
+    TextSlot *t = text_slot(a, s, size, c);
+    if (!t || !t->texture)
+        return;
+    SDL_Rect source = t->ink;
+    if (source.w > box.w)
+        source.w = box.w;
+    int x = box.x + (align == 1 ? (box.w - source.w) / 2 : align == 2 ? box.w - source.w : 0);
+    SDL_Rect dest = {x, box.y + (box.h - source.h) / 2, source.w, source.h};
+    SDL_RenderCopy(a->renderer, t->texture, &source, &dest);
 }
 static void image_draw(App *a, ImageSlot *slot, SDL_Rect dst, bool contain) {
     if (!slot || !slot->texture)
@@ -154,48 +176,13 @@ static void clear_images(App *a) {
     }
 }
 static void circle(App *a, int x, int y, int r, SDL_Color c) {
-    SDL_SetRenderDrawColor(a->renderer, c.r, c.g, c.b, c.a);
-    for (int dy = -r; dy <= r; dy++) {
-        int z = (int)sqrt(r * r - dy * dy);
-        SDL_RenderDrawLine(a->renderer, x - z, y + dy, x + z, y + dy);
-    }
+    paint_round(a, (SDL_Rect){x - r, y - r, 2 * r, 2 * r}, r, c);
 }
 static void logo(App *a, int x, int y, int r) {
-    SDL_Color colors[] = {{95, 152, 255, 255},
-                          {127, 124, 244, 255},
-                          {232, 114, 156, 255},
-                          {240, 173, 95, 255},
-                          {106, 199, 174, 255}};
-    for (int i = 0; i < 5; i++) {
-        double t = i * 6.2831853 / 5 - 1.57;
-        circle(a, x + (int)(cos(t) * r * .63), y + (int)(sin(t) * r * .63), (int)(r * .48),
-               colors[i]);
-    }
-    circle(a, x, y, (int)(r * .25), BG);
+    paint_icon(a, 6, (SDL_Rect){x - r, y - r, 2 * r, 2 * r}, (SDL_Color){255, 255, 255, 255});
 }
 static void nav_icon(App *a, int i, int x, int y, SDL_Color c) {
-    SDL_SetRenderDrawColor(a->renderer, c.r, c.g, c.b, c.a);
-    if (i == 0 || i == 1) {
-        SDL_Rect r = {x, y, 24, 22};
-        SDL_RenderDrawRect(a->renderer, &r);
-        if (i == 1) {
-            r.x += 5;
-            r.y -= 5;
-            SDL_RenderDrawRect(a->renderer, &r);
-        } else {
-            SDL_RenderDrawLine(a->renderer, x + 2, y + 20, x + 11, y + 8);
-            SDL_RenderDrawLine(a->renderer, x + 11, y + 8, x + 22, y + 20);
-            circle(a, x + 18, y + 5, 2, c);
-        }
-    } else if (i == 2) {
-        text(a, "♡", x - 2, y - 10, 4, c, 40);
-    } else if (i == 3) {
-        for (int z = 0; z < 24; z++)
-            SDL_RenderDrawLine(a->renderer, x + z, y + z / 2, x + z, y + 24 - z / 2);
-    } else {
-        circle(a, x + 12, y + 12, 12, c);
-        circle(a, x + 12, y + 12, 7, BG);
-    }
+    paint_icon(a, i, (SDL_Rect){x, y, 32, 32}, c);
 }
 
 bool ui_init(App *a, const char *assets, bool hidden, char *error) {
@@ -258,6 +245,10 @@ bool ui_init(App *a, const char *assets, bool hidden, char *error) {
         }
         TTF_SetFontHinting(a->fonts[i], TTF_HINTING_LIGHT);
     }
+    if (!paint_init(a, assets)) {
+        copy_text(error, ERROR_SIZE, "无法加载矢量图标");
+        return false;
+    }
     a->sidebar = true;
     a->zoom = 1.0;
     a->selected = 0;
@@ -282,6 +273,7 @@ void ui_destroy(App *a) {
         SDL_DestroyTexture(a->shade_horizontal);
     if (a->shade_vertical)
         SDL_DestroyTexture(a->shade_vertical);
+    paint_destroy(a);
     if (a->renderer)
         SDL_DestroyRenderer(a->renderer);
     if (a->window)
@@ -625,10 +617,11 @@ void ui_key(App *a, SDL_Keycode key, unsigned scan, bool repeat) {
                 erase_character(a->keyboard_field ? a->editing.api_key : a->editing.server);
             else if (i == 57)
                 (a->keyboard_field ? a->editing.api_key : a->editing.server)[0] = 0;
-            else if (i >= 58) {
+            else if (i == 58) {
                 a->keyboard = false;
                 SDL_StopTextInput();
-            }
+            } else if (i == 59)
+                app_back(a);
         }
         return;
     }
@@ -766,6 +759,8 @@ void ui_pointer(App *a, int x, int y, bool click) {
     if (a->keyboard) {
         if (x >= 430 && x < 1490 && y >= 444 && y < 900) {
             int col = (x - 430) / 106, row = (y - 444) / 76;
+            if ((x - 430) % 106 >= 96 || (y - 444) % 76 >= 66)
+                return;
             a->keyboard_index = row * 10 + col;
             if (click)
                 ui_key(a, SDLK_RETURN, 0, false);
@@ -784,15 +779,15 @@ void ui_pointer(App *a, int x, int y, bool click) {
                 f = 0;
             if (y >= 330 && y < 420)
                 f = 1;
-            if (y >= 452 && y < 510)
+            if (y >= 452 && y < 514)
                 f = 2;
-            if (y >= 524 && y < 582)
+            if (y >= 524 && y < 586)
                 f = 3;
             if (y >= 634 && y < 710)
                 f = 4;
             if (y >= 758 && y < 814)
                 f = 5;
-            if (y >= 850 && y < 920)
+            if (y >= 850 && y < 912)
                 f = 6;
             if (f >= 0) {
                 a->setting_focus = f;
@@ -802,9 +797,9 @@ void ui_pointer(App *a, int x, int y, bool click) {
         }
         return;
     }
-    if (x < 290 && y >= 240 && y < 650) {
-        int nav = (y - 240) / 82;
-        if (nav < 5) {
+    if (x >= 27 && x < 262 && y >= 234 && y < 626) {
+        int nav = (y - 234) / 82;
+        if (nav < 5 && (y - 234) % 82 < 64) {
             a->nav = nav;
             a->sidebar = true;
             if (click)
@@ -828,7 +823,7 @@ static void draw_sidebar(App *a) {
     fill(a, 0, 0, 290, 1080, (SDL_Color){13, 20, 32, 255});
     fill(a, 289, 0, 1, 1080, (SDL_Color){34, 44, 61, 255});
     logo(a, 74, 77, 25);
-    text(a, "immich", 112, 41, 5, WHITE, 160);
+    text_box(a, "immich", (SDL_Rect){112, 48, 164, 56}, 5, WHITE, 0);
     text(a, "TV  /  时光放映室", 49, 119, 0, MUTED, 230);
     for (int i = 0; i < 5; i++) {
         int y = 244 + i * 82;
@@ -839,47 +834,52 @@ static void draw_sidebar(App *a) {
                       focused ? (SDL_Color){57, 78, 118, 255} : (SDL_Color){28, 42, 65, 255});
         if (active)
             fill(a, 28, y + 7, 3, 30, BLUE);
-        nav_icon(a, i, 54, y + 10, active ? BLUE : MUTED);
-        text(a, names[i], 102, y - 1, 2, active ? WHITE : MUTED, 150);
+        nav_icon(a, i, 50, y + 6, active ? BLUE : MUTED);
+        text_box(a, names[i], (SDL_Rect){102, y - 10, 145, 64}, 2, active ? WHITE : MUTED, 0);
     }
     circle(a, 51, 924, 5, a->connected ? (SDL_Color){114, 207, 164, 255} : MUTED);
-    text(a, a->connected ? "已连接图库" : "尚未连接", 68, 906, 0, MUTED, 190);
+    text_box(a, a->connected ? "已连接图库" : "尚未连接", (SDL_Rect){68, 906, 190, 36}, 0, MUTED,
+             0);
     round_box(a, 39, 963, 127, 35, 9, (SDL_Color){24, 39, 44, 255});
-    text(a, "只读浏览", 55, 966, 0, (SDL_Color){151, 207, 183, 255}, 120);
-    text(a, "0.1.0", 203, 968, 0, MUTED, 60);
+    text_box(a, "只读浏览", (SDL_Rect){39, 963, 127, 35}, 0, (SDL_Color){151, 207, 183, 255}, 1);
+    text_box(a, APP_VERSION, (SDL_Rect){203, 963, 60, 35}, 0, MUTED, 2);
 }
 static void draw_gallery(App *a, uint32_t now) {
     const char *title = *a->album ? a->album_name : names[a->view];
-    text(a, title, 350, 52, 5, WHITE, 1100);
-    text(a, *a->album ? "相册中的每一帧，都有它的故事。" : subtitles[a->view], 352, 118, 1, MUTED,
-         1100);
+    text_box(a, title, (SDL_Rect){350, 52, 1100, 62}, 5, WHITE, 0);
+    text_box(a, *a->album ? "相册中的每一帧，都有它的故事。" : subtitles[a->view],
+             (SDL_Rect){352, 118, 1100, 36}, 1, MUTED, 0);
     time_t t = time(NULL);
     struct tm clock;
     localtime_r(&t, &clock);
     char timebuf[32];
     strftime(timebuf, sizeof timebuf, "%H:%M", &clock);
-    text(a, timebuf, 1738, 67, 2, MUTED, 120);
+    text_box(a, timebuf, (SDL_Rect){1725, 52, 120, 62}, 2, MUTED, 2);
     SDL_Rect hero = {350, 185, 1495, 330};
-    round_box(a, hero.x, hero.y, hero.w, hero.h, 16, (SDL_Color){29, 45, 58, 255});
+    round_box(a, hero.x, hero.y, hero.w, hero.h, 20, (SDL_Color){29, 45, 58, 255});
     const char *hero_id = NULL;
     if (a->catalog && count(a) > 0)
         hero_id = albums(a) ? a->catalog->albums[0].cover_id : a->catalog->assets[0].id;
     if (hero_id)
         image_draw(a, get_image(a, hero_id, true), hero, false);
     SDL_RenderCopy(a->renderer, a->shade_horizontal, NULL, &hero);
-    text(a, "YOUR LIFE, ON THE BIG SCREEN", 390, 230, 0, (SDL_Color){174, 204, 241, 255}, 900);
-    text(a, "把美好，留在眼前。", 386, 280, 6, WHITE, 1120);
-    text(a, "坐下来，慢慢重温。", 390, 374, 2, (SDL_Color){213, 224, 239, 255}, 900);
-    round_box(a, 391, 441, 245, 40, 20, (SDL_Color){230, 237, 251, 255});
-    text(a, "选择照片，按 OK 查看", 411, 445, 0, (SDL_Color){24, 39, 63, 255}, 230);
+    paint_clip_corners(a, hero, 20, BG);
+    text_box(a, "YOUR LIFE, ON THE BIG SCREEN", (SDL_Rect){390, 225, 900, 32}, 0,
+             (SDL_Color){174, 204, 241, 255}, 0);
+    text_box(a, "把美好，留在眼前。", (SDL_Rect){386, 280, 1120, 80}, 6, WHITE, 0);
+    text_box(a, "坐下来，慢慢重温。", (SDL_Rect){390, 370, 900, 44}, 2,
+             (SDL_Color){213, 224, 239, 255}, 0);
+    round_box(a, 391, 439, 260, 44, 22, (SDL_Color){230, 237, 251, 255});
+    text_box(a, "选择照片，按 OK 查看", (SDL_Rect){391, 439, 260, 44}, 0,
+             (SDL_Color){24, 39, 63, 255}, 1);
     char label[280];
     snprintf(label, sizeof label, "%s%s",
              *a->album ? "相册照片" : (albums(a) ? "你的相册" : "最近的时光"),
              a->page > 1 ? "  ·  继续浏览" : "");
-    text(a, label, 351, 542, 2, WHITE, 1150);
+    text_box(a, label, (SDL_Rect){351, 536, 1120, 48}, 2, WHITE, 0);
     snprintf(label, sizeof label, "第 %d 页  ·  %zu %s", a->page,
              a->catalog ? a->catalog->count : 0, albums(a) ? "个相册" : "个项目");
-    text(a, label, 1580, 549, 0, MUTED, 280);
+    text_box(a, label, (SDL_Rect){1550, 536, 295, 48}, 0, MUTED, 2);
     if (a->loading) {
         for (int i = 0; i < 10; i++) {
             int x = 350 + (i % 5) * 300, y = 600 + (i / 5) * 206;
@@ -895,8 +895,9 @@ static void draw_gallery(App *a, uint32_t now) {
         return;
     }
     if (!count(a)) {
-        text(a, "这里还没有内容", 375, 666, 4, WHITE, 1200);
-        text(a, "换个分类看看，或在 Immich 中检查照片和 API 密钥权限。", 375, 738, 1, MUTED, 1400);
+        text_box(a, "这里还没有内容", (SDL_Rect){350, 640, 1495, 80}, 4, WHITE, 1);
+        text_box(a, "换个分类看看，或在 Immich 中检查照片和 API 密钥权限。",
+                 (SDL_Rect){350, 730, 1495, 55}, 1, MUTED, 1);
         return;
     }
     for (int i = 0; i < 10; i++) {
@@ -905,13 +906,16 @@ static void draw_gallery(App *a, uint32_t now) {
             break;
         int x = 350 + (i % 5) * 300, y = 600 + (i / 5) * 206;
         SDL_Rect box = {x, y, 275, 166};
-        round_box(a, x, y, 275, 166, 9, (SDL_Color){26, 36, 52, 255});
+        round_box(a, x, y, 275, 166, 12, (SDL_Color){26, 36, 52, 255});
         const char *id =
             albums(a) ? a->catalog->albums[index].cover_id : a->catalog->assets[index].id;
         ImageSlot *image = get_image(a, id, false);
         image_draw(a, image, box, false);
+        paint_clip_corners(a, box, 12, BG);
+        if (!valid_asset_id(id) && albums(a))
+            paint_icon(a, 1, (SDL_Rect){x + 110, y + 55, 55, 55}, (SDL_Color){100, 117, 142, 255});
         if (image && image->failed)
-            text(a, "缩略图不可用", x + 56, y + 65, 0, MUTED, 200);
+            text_box(a, "缩略图不可用", box, 0, MUTED, 1);
         if (!a->sidebar && index == a->selected) {
             if (!a->focus_valid) {
                 a->focus_x = x;
@@ -920,29 +924,36 @@ static void draw_gallery(App *a, uint32_t now) {
             }
             a->focus_x += (x - a->focus_x) * .35f;
             a->focus_y += (y - a->focus_y) * .35f;
-            outline(a, (SDL_Rect){(int)a->focus_x - 5, (int)a->focus_y - 5, 285, 176},
+            outline(a, (SDL_Rect){(int)a->focus_x - 7, (int)a->focus_y - 7, 289, 180},
                     (SDL_Color){170, 201, 255, 255}, 3);
         }
         if (albums(a)) {
             Album *b = &a->catalog->albums[index];
-            text(a, b->name, x, y + 174, 1, WHITE, 205);
+            text_box(a, b->name, (SDL_Rect){x, y + 174, 195, 34}, 1, WHITE, 0);
             snprintf(label, sizeof label, "%d 张", b->count);
-            text(a, label, x + 209, y + 177, 0, MUTED, 68);
+            text_box(a, label, (SDL_Rect){x + 200, y + 174, 75, 34}, 0, MUTED, 2);
         } else {
             Asset *b = &a->catalog->assets[index];
             if (b->video) {
-                round_box(a, x + 12, y + 116, 76, 34, 7, (SDL_Color){0, 0, 0, 170});
-                snprintf(label, sizeof label, "▶ %d:%02d", (int)b->duration / 60,
+                snprintf(label, sizeof label, "%d:%02d", (int)b->duration / 60,
                          (int)b->duration % 60);
-                text(a, label, x + 21, y + 119, 0, WHITE, 72);
+                TextSlot *duration = text_slot(a, label, 0, WHITE);
+                int label_width = duration ? duration->ink.w : 42;
+                int badge_width = label_width + 38;
+                round_box(a, x + 12, y + 120, badge_width, 34, 9, (SDL_Color){0, 0, 0, 180});
+                paint_icon(a, 3, (SDL_Rect){x + 21, y + 130, 14, 14}, WHITE);
+                text_box(a, label, (SDL_Rect){x + 40, y + 120, label_width, 34}, 0, WHITE, 1);
             }
-            if (b->favorite)
-                text(a, "♥", x + 238, y + 10, 1, WHITE, 35);
+            if (b->favorite) {
+                round_box(a, x + 230, y + 8, 34, 34, 17, (SDL_Color){4, 10, 18, 135});
+                paint_icon(a, 5, (SDL_Rect){x + 237, y + 15, 20, 20}, WHITE);
+            }
             if (*b->city)
                 copy_text(label, sizeof label, b->city);
             else
                 snprintf(label, sizeof label, "%.10s", b->date);
-            text(a, label, x, y + 174, 0, index == a->selected && !a->sidebar ? WHITE : MUTED, 265);
+            text_box(a, label, (SDL_Rect){x, y + 174, 275, 34}, 0,
+                     index == a->selected && !a->sidebar ? WHITE : MUTED, 0);
         }
     }
     text(a, "← → ↑ ↓  选择       OK  查看       返回  侧栏       CH ±  翻页", 352, 1028, 0, MUTED,
@@ -983,8 +994,8 @@ static void draw_viewer(App *a, uint32_t now) {
         int w = (int)(1920 * a->zoom), h = (int)(1080 * a->zoom);
         image_draw(a, slot, (SDL_Rect){(1920 - w) / 2, (1080 - h) / 2, w, h}, true);
     } else
-        text(a, slot && slot->failed ? "这张照片暂时无法显示" : "正在载入清晰照片…", 710, 500, 2,
-             MUTED, 1000);
+        text_box(a, slot && slot->failed ? "这张照片暂时无法显示" : "正在载入清晰照片…",
+                 (SDL_Rect){0, 0, 1920, 1080}, 2, MUTED, 1);
     if (a->info || now - a->last_input < 4500 || a->slideshow || b->video) {
         SDL_Rect shade_rect = {0, 800, 1920, 280};
         SDL_RenderCopy(a->renderer, a->shade_vertical, NULL, &shade_rect);
@@ -1021,7 +1032,7 @@ static void draw_settings(App *a) {
                   focus ? (SDL_Color){31, 48, 77, 255} : (SDL_Color){21, 31, 47, 255});
         if (focus)
             outline(a, (SDL_Rect){600, y, 900, 90}, BLUE, 2);
-        text(a, labels[i], 620, y + 8, 0, MUTED, 800);
+        text_box(a, labels[i], (SDL_Rect){620, y + 8, 850, 26}, 0, MUTED, 0);
         char masked[160];
         const char *s = i ? a->editing.api_key : a->editing.server;
         if (i && *s) {
@@ -1032,33 +1043,35 @@ static void draw_settings(App *a) {
             masked[n] = 0;
             s = masked;
         }
-        text(a, *s ? s : (i ? "在 Immich 账户设置中创建只读密钥" : "https://photos.example.com"),
-             621, y + 36, 2, *s ? WHITE : MUTED, 850);
+        text_box(a,
+                 *s ? s : (i ? "在 Immich 账户设置中创建只读密钥" : "https://photos.example.com"),
+                 (SDL_Rect){620, y + 39, 855, 42}, 2, *s ? WHITE : MUTED, 0);
     }
     const char *toggles[] = {"允许 HTTP 连接（仅用于可信的局域网）", "在本机记住连接"};
     bool enabled[] = {a->editing.allow_http, a->editing.remember};
     for (int i = 0; i < 2; i++) {
         int y = 452 + i * 72;
         if (a->setting_focus == i + 2)
-            round_box(a, 594, y - 4, 920, 62, 10, (SDL_Color){30, 44, 66, 255});
-        text(a, toggles[i], 615, y + 7, 1, WHITE, 800);
-        round_box(a, 1415, y + 9, 60, 30, 15,
+            round_box(a, 594, y, 912, 62, 12, (SDL_Color){30, 44, 66, 255});
+        text_box(a, toggles[i], (SDL_Rect){620, y, 770, 62}, 1, WHITE, 0);
+        round_box(a, 1415, y + 15, 60, 32, 16,
                   enabled[i] ? (SDL_Color){104, 156, 238, 255} : (SDL_Color){56, 67, 84, 255});
-        circle(a, enabled[i] ? 1460 : 1430, y + 24, 11, WHITE);
+        circle(a, enabled[i] ? 1459 : 1431, y + 31, 12, WHITE);
     }
     round_box(a, 600, 634, 900, 76, 12,
               a->setting_focus == 4 ? (SDL_Color){179, 207, 255, 255}
                                     : (SDL_Color){105, 156, 237, 255});
-    text(a, "连接图库", 980, 650, 3, (SDL_Color){12, 24, 45, 255}, 350);
-    text(a, "仅浏览照片、相册与视频；上传、修改、删除入口均未实现。", 602, 725, 0, MUTED, 1100);
+    text_box(a, "连接图库", (SDL_Rect){600, 634, 900, 76}, 3, (SDL_Color){12, 24, 45, 255}, 1);
+    text_box(a, "只读访问你的照片与相册", (SDL_Rect){600, 723, 900, 32}, 0, MUTED, 1);
     if (a->setting_focus == 5)
         round_box(a, 594, 758, 920, 56, 10, (SDL_Color){45, 31, 40, 255});
-    text(a, "清除本机连接", 615, 765, 1, (SDL_Color){226, 158, 163, 255}, 900);
+    text_box(a, "清除本机连接", (SDL_Rect){620, 758, 860, 56}, 1, (SDL_Color){226, 158, 163, 255},
+             0);
     if (a->setting_focus == 6)
         round_box(a, 594, 850, 920, 62, 10, (SDL_Color){30, 44, 66, 255});
     char s[160];
     snprintf(s, sizeof s, "幻灯片间隔     %d 秒", a->editing.slideshow_seconds);
-    text(a, s, 615, 864, 1, WHITE, 900);
+    text_box(a, s, (SDL_Rect){620, 850, 860, 62}, 1, WHITE, 0);
     if (*a->error)
         text(a, a->error, 600, 947, 1, (SDL_Color){244, 160, 160, 255}, 1150);
     else if (*a->notice)
@@ -1078,7 +1091,7 @@ static void draw_keyboard(App *a) {
         value = masked;
     }
     round_box(a, 430, 331, 1060, 79, 9, (SDL_Color){9, 17, 30, 255});
-    text(a, value, 452, 348, 2, WHITE, 1010);
+    text_box(a, value, (SDL_Rect){452, 331, 1010, 79}, 2, WHITE, 0);
     const char *k = a->shift ? keys_upper : keys_lower;
     for (int i = 0; i < 60; i++) {
         int x = 430 + i % 10 * 106, y = 444 + i / 10 * 76;
@@ -1096,9 +1109,11 @@ static void draw_keyboard(App *a) {
             s = "删除";
         else if (i == 57)
             s = "清空";
-        else if (i >= 58)
+        else if (i == 58)
             s = "完成";
-        text(a, s, x + 20, y + 14, 2, i == a->keyboard_index ? BG : WHITE, 80);
+        else if (i == 59)
+            s = "取消";
+        text_box(a, s, (SDL_Rect){x, y, 96, 66}, 2, i == a->keyboard_index ? BG : WHITE, 1);
     }
     text(a, "支持遥控器、魔法指针或实体键盘。返回键取消本次编辑。", 430, 908, 0, MUTED, 1060);
 }
@@ -1119,13 +1134,13 @@ void ui_draw(App *a, uint32_t now) {
         draw_keyboard(a);
     if (*a->error && a->viewer && !a->video) {
         round_box(a, 300, 70, 1320, 75, 12, (SDL_Color){67, 34, 43, 240});
-        text(a, a->error, 330, 90, 1, WHITE, 1260);
+        text_box(a, a->error, (SDL_Rect){330, 70, 1260, 75}, 1, WHITE, 1);
     }
     if (a->exit_confirm) {
         fill(a, 0, 0, 1920, 1080, (SDL_Color){0, 0, 0, 185});
         round_box(a, 580, 360, 760, 340, 20, (SDL_Color){20, 31, 48, 255});
-        text(a, "离开放映室？", 635, 402, 5, WHITE, 650);
-        text(a, "按 OK 退出，按返回键继续浏览。", 638, 516, 2, MUTED, 650);
+        text_box(a, "离开放映室？", (SDL_Rect){610, 400, 700, 90}, 5, WHITE, 1);
+        text_box(a, "按 OK 退出，按返回键继续浏览。", (SDL_Rect){610, 516, 700, 65}, 2, MUTED, 1);
     }
 }
 void app_tick(App *a, uint32_t now) {

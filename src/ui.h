@@ -5,6 +5,12 @@
 #include <SDL_ttf.h>
 #define IMAGE_CACHE 36
 #define TEXT_CACHE 256
+#define ICON_COUNT 7
+typedef struct {
+    SDL_Texture *texture;
+    int w, h, radius, kind;
+    uint32_t used;
+} ShapeSlot;
 typedef struct {
     char id[80];
     bool preview, pending, failed;
@@ -17,6 +23,7 @@ typedef struct {
     int size;
     SDL_Color color;
     SDL_Texture *texture;
+    SDL_Rect ink;
     int w, h;
     uint32_t used;
 } TextSlot;
@@ -24,6 +31,8 @@ typedef struct {
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Texture *shade_horizontal, *shade_vertical;
+    SDL_Texture *icons[ICON_COUNT];
+    ShapeSlot shapes[40];
     TTF_Font *fonts[8];
     TextSlot text[TEXT_CACHE];
     ImageSlot images[IMAGE_CACHE];

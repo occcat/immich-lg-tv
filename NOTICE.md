@@ -14,6 +14,10 @@ The application source is GPL-3.0-or-later. See LICENSE.
   binaries are not redistributed.
 - `vendor/cJSON.c` and `vendor/cJSON.h`: cJSON 1.7.19, Dave Gamble and contributors,
   MIT. See `vendor/cJSON.LICENSE` (also bundled in the application assets).
+- `vendor/nanosvg/`: NanoSVG by Mikko Mononen, commit
+  `239e102ec2c691f2902e20ace2ed36ee4a35cfe6`, zlib license. The original notices
+  remain in both headers; terms are also bundled as `assets/NanoSVG.LICENSE`.
+  Used to rasterize the original SVG interface icons with antialiasing.
 - `assets/Interface.ttf`: the Noto Sans CJK font distributed by PlxNative;
   SIL Open Font License 1.1, copyright holders and full terms in `assets/OFL.txt`.
 - `assets/cacert.pem`: Mozilla CA certificate bundle distributed by curl;
