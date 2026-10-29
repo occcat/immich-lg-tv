@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
              exit_after = (uint32_t)json_integer(launch, "exitAfterMs", 0);
     bool captured = false;
 #endif
-    fprintf(stderr, "Immich TV %s ready; native=%d; read-only policy enabled\n", APP_VERSION,
+    fprintf(stderr, APP_NAME " %s ready; native=%d; read-only policy enabled\n", APP_VERSION,
 #ifdef WEBOS
             1
 #else
@@ -220,9 +220,9 @@ int main(int argc, char **argv) {
 #ifdef WEBOS
                 char typed[33] = {0};
                 memcpy(typed, raw + 16, 32);
-                ui_text(&app, typed);
+                app_edit_text(&app, typed);
 #else
-                ui_text(&app, ((SDL_Event *)raw)->text.text);
+                app_edit_text(&app, ((SDL_Event *)raw)->text.text);
 #endif
             } else if (type == SDL_MOUSEMOTION || type == SDL_MOUSEBUTTONDOWN) {
                 int x = (int)read_word(raw, 20), y = (int)read_word(raw, 24);

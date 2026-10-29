@@ -1,0 +1,8 @@
+{
+  "name": "immich-lg-tv",
+  "displayName": "Immich LG TV",
+  "applicationId": "com.immichtv.viewer",
+  "version": "0.1.0",
+  "description": "Native read-only Immich client for LG webOS TVs, with remote navigation, photo slideshows, and hardware video playback.",
+  "repository": "occcat/immich-lg-tv"
+}

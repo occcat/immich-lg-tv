@@ -31,7 +31,7 @@ class NativeUIRegression(unittest.TestCase):
                 sequence += [{"at":5900,"key":"ok"},shot(6200,"settings"),{"at":6300,"key":"ok"},shot(6600,"keyboard")]
                 params = {"server":f"http://127.0.0.1:{server.server_port}","apiKey":fixture.DEMO_KEY,"allowHttp":True,"qa":sequence,"exitAfterMs":6900}
                 env = dict(os.environ, SDL_VIDEODRIVER="dummy")
-                result = subprocess.run([str(ROOT/"build/immich-tv-qa"),"--hidden","--config",str(folder/"config.json"),json.dumps(params)],cwd=ROOT,env=env,capture_output=True,text=True,timeout=20)
+                result = subprocess.run([str(ROOT/"build/immich-lg-tv-qa"),"--hidden","--config",str(folder/"config.json"),json.dumps(params)],cwd=ROOT,env=env,capture_output=True,text=True,timeout=20)
                 self.assertEqual(result.returncode,0,result.stderr)
                 def state(name): return json.loads((folder/f"{name}.png.json").read_text())
                 self.assertEqual((state("albums")["view"],state("albums")["count"]),(1,6))

@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import tarfile
 
-ROOT = Path(__file__).resolve().parent.parent
+from project import ROOT, NAME, TITLE, APP, VERSION, PACKAGE
 
 def ar_members(data):
     if data[:8] != b"!<arch>\n": raise ValueError("Invalid ar archive")
@@ -19,15 +19,16 @@ def ar_members(data):
     if offset != len(data): raise ValueError("Truncated ar archive")
 
 def main():
-    path = ROOT / "dist/com.immichtv.viewer_0.1.0_arm.ipk"
+    path = ROOT / "dist" / PACKAGE
     data = path.read_bytes(); members = dict(ar_members(data))
     assert members["debian-binary"] == b"2.0\n"
-    prefix = "./usr/palm/applications/com.immichtv.viewer/"
+    prefix = f"./usr/palm/applications/{APP}/"
     with tarfile.open(fileobj=io.BytesIO(members["data.tar.gz"]), mode="r:gz") as tar:
         names = {m.name for m in tar.getmembers()}
         info = json.load(tar.extractfile(prefix + "appinfo.json"))
-        binary = tar.extractfile(prefix + "immich-tv").read()
-        assert info["id"] == "com.immichtv.viewer" and info["version"] == "0.1.0" and info["type"] == "native"
+        binary = tar.extractfile(prefix + NAME).read()
+        assert info["id"] == APP and info["version"] == VERSION and info["type"] == "native"
+        assert info["main"] == NAME and info["title"] == TITLE
         assert binary[:4] == b"\x7fELF" and int.from_bytes(binary[18:20], "little") == 40
         assert not any(marker in binary for marker in [b"QA frame captured", b"capturePath", b"exitAfterMs", b"immich-tv-demo"])
         assert all(name.startswith(prefix) and ".." not in name for name in names)

@@ -128,7 +128,7 @@ static CURL *prepare(const Config *config, const char *method, const char *path,
     http.setopt(c, CURLOPT_SSL_VERIFYHOST, 2L);
     if (*ca_path)
         http.setopt(c, CURLOPT_CAINFO, ca_path);
-    http.setopt(c, CURLOPT_USERAGENT, "ImmichTV/" APP_VERSION);
+    http.setopt(c, CURLOPT_USERAGENT, "immich-lg-tv/" APP_VERSION);
     if (!strcmp(method, "HEAD"))
         http.setopt(c, CURLOPT_NOBODY, 1L);
     return c;

@@ -8,7 +8,7 @@ import shutil
 import socket
 import subprocess
 
-ROOT = Path(__file__).resolve().parent.parent
+from project import ROOT, APP, PACKAGE
 
 def cli(name):
     executable = shutil.which(name)
@@ -33,8 +33,8 @@ def main():
             sock.connect((device["host"], 9922)); address = sock.getsockname()[0]
         server = f"http://{address}:22830"
     if args.install:
-        subprocess.run([cli("ares-install"), "-d", args.device, str(ROOT / "dist/com.immichtv.viewer_0.1.0_arm.ipk")], check=True)
-    subprocess.run([cli("ares-launch"), "-c", "com.immichtv.viewer", "-d", args.device], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run([cli("ares-install"), "-d", args.device, str(ROOT / "dist" / PACKAGE)], check=True)
+    subprocess.run([cli("ares-launch"), "-c", APP, "-d", args.device], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     params = {"server": server, "apiKey": "immich-tv-demo", "allowHttp": True, "remember": True}
     if args.smoke:
         # Requires `make QA=1 ipk`. The public fixture key is never a real account credential.
@@ -52,7 +52,7 @@ def main():
         key(39500,"up"); key(40000,"ok"); key(43000,"nextpage"); shot(46000,"page2")
         key(46500,"prevpage"); shot(50000,"gallery")
         params["qa"] = steps
-    subprocess.run([cli("ares-launch"), "-d", args.device, "com.immichtv.viewer", "-p", json.dumps(params)], check=True)
+    subprocess.run([cli("ares-launch"), "-d", args.device, APP, "-p", json.dumps(params)], check=True)
     print("Synthetic fixture account launched. Keep the local fixture server running.")
 
 if __name__ == "__main__": main()

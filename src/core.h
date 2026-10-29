@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #define APP_ID "com.immichtv.viewer"
+#define APP_NAME "Immich LG TV"
 #define APP_VERSION "0.1.0"
 #define PAGE_SIZE 40
 #define ERROR_SIZE 256

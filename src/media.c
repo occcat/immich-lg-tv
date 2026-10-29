@@ -18,7 +18,7 @@ bool media_start(const Config *config, const Asset *asset, char *error) {
     if (!proxy_start(config, asset->id, url, sizeof url, error))
         return false;
     char *args[] = {"ffplay",        "-loglevel",        "error", "-autoexit",
-                    "-window_title", "Immich TV · 视频", url,     NULL};
+                    "-window_title", APP_NAME " · 视频", url,     NULL};
     if (posix_spawnp(&child, "ffplay", NULL, NULL, args, environ)) {
         copy_text(error, ERROR_SIZE, "桌面视频预览需要 ffmpeg（ffplay）");
         proxy_stop();

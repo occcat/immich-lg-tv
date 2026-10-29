@@ -9,9 +9,7 @@ import sys
 import tarfile
 import zlib
 
-ROOT = Path(__file__).resolve().parent.parent
-APP = "com.immichtv.viewer"
-VERSION = "0.1.0"
+from project import ROOT, NAME, TITLE, APP, VERSION, DESCRIPTION
 
 def icon():
     width = height = 160
@@ -56,14 +54,14 @@ def member(name, data):
 def main():
     binary = Path(sys.argv[1])
     prefix = f"./usr/palm/applications/{APP}"
-    appinfo = {"id": APP, "version": VERSION, "vendor": "Immich TV contributors", "type": "native", "main": "immich-tv", "title": "Immich TV", "icon": "icon.png", "largeIcon": "icon.png", "resolution": "1920x1080", "bgColor": "#0a0f18", "requiredACG": []}
-    files = [(f"{prefix}/immich-tv", binary.read_bytes(), 0o755), (f"{prefix}/appinfo.json", json.dumps(appinfo).encode(), 0o644), (f"{prefix}/icon.png", icon(), 0o644)]
+    appinfo = {"id": APP, "version": VERSION, "vendor": "occcat", "type": "native", "main": NAME, "title": TITLE, "icon": "icon.png", "largeIcon": "icon.png", "resolution": "1920x1080", "bgColor": "#0a0f18", "requiredACG": []}
+    files = [(f"{prefix}/{NAME}", binary.read_bytes(), 0o755), (f"{prefix}/appinfo.json", json.dumps(appinfo).encode(), 0o644), (f"{prefix}/icon.png", icon(), 0o644)]
     for file in sorted((ROOT / "assets").rglob("*")):
         if file.is_file(): files.append((f"{prefix}/assets/{file.relative_to(ROOT / 'assets').as_posix()}", file.read_bytes(), 0o644))
     for name in ["LICENSE", "NOTICE.md"]:
         path = ROOT / name
         if path.exists(): files.append((f"{prefix}/{name}", path.read_bytes(), 0o644))
-    control = f"Package: {APP}\nVersion: {VERSION}\nSection: misc\nPriority: optional\nArchitecture: arm\nMaintainer: Immich TV contributors\nDescription: Native read-only Immich photo viewer for LG webOS\nInstalled-Size: {sum(len(v) for _, v, _ in files)//1024}\n\n".encode()
+    control = f"Package: {APP}\nVersion: {VERSION}\nSection: misc\nPriority: optional\nArchitecture: arm\nMaintainer: occcat\nDescription: {DESCRIPTION}\nInstalled-Size: {sum(len(v) for _, v, _ in files)//1024}\n\n".encode()
     data = b"!<arch>\n" + member("debian-binary", b"2.0\n") + member("control.tar.gz", archive([("./control", control, 0o644)])) + member("data.tar.gz", archive(files))
     out = ROOT / "dist" / f"{APP}_{VERSION}_arm.ipk"; out.parent.mkdir(exist_ok=True); out.write_bytes(data)
     (out.parent / "SHA256SUMS").write_text(hashlib.sha256(data).hexdigest() + "  " + out.name + "\n")
