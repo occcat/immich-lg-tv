@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Apply this private repository's description, topics, and issue labels manually."""
+"""Apply this repository's description, topics, and issue labels manually."""
 import json
 import subprocess
 from urllib.parse import quote
-from project import ROOT, DESCRIPTION, REPOSITORY
+from project import ROOT, DESCRIPTION, REPOSITORY, PROJECT
 
 
 def api(method, path, data=None):
@@ -16,7 +16,9 @@ def api(method, path, data=None):
 
 def main():
     repo = api("GET", f"repos/{REPOSITORY}")
-    if not repo["private"]: raise SystemExit("The repository must be private before applying project metadata.")
+    expected = PROJECT.get("visibility", "private")
+    if repo["private"] != (expected == "private"):
+        raise SystemExit(f"Repository visibility does not match project.json ({expected}).")
     api("PATCH", f"repos/{REPOSITORY}", {"description": DESCRIPTION})
     topics = json.loads((ROOT / ".github/topics.json").read_text())
     api("PUT", f"repos/{REPOSITORY}/topics", {"names": topics})
@@ -29,7 +31,7 @@ def main():
             path += "/" + quote(label["name"], safe="")
             method = "PATCH"
         api(method, path, label)
-    print(f"Configured {REPOSITORY}: private, description, {len(topics)} topics, {len(labels)} project labels.")
+    print(f"Configured {REPOSITORY}: {expected}, description, {len(topics)} topics, {len(labels)} project labels.")
 
 
 if __name__ == "__main__": main()

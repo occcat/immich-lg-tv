@@ -57,7 +57,7 @@ Keep your developer-mode session active while using sideloaded applications.
 ### 2. Install the native app
 
 Build an IPK locally using the [development guide](docs/development.md), or
-manually run the private repository's **Manual CI** workflow with
+manually run the repository's **Manual CI** workflow with
 **Build the ARM webOS IPK** enabled. Its `immich-lg-tv-webos-package` artifact
 contains the IPK and corresponding FFmpeg sources.
 

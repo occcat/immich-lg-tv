@@ -25,7 +25,9 @@ commands and skills apply to OpenCode only, not to this native C/webOS project.
 - Keep test automation behind `ENABLE_QA`; never ship QA launch parameters.
 - CI workflows must use `workflow_dispatch` exclusively. Never add automatic
   push, pull-request, tag, schedule, or dependent-workflow triggers.
-- Keep the repository private unless the user explicitly asks otherwise.
+- The repository is public. Never commit real credentials, private keys,
+  device-pairing data, or private photo libraries. Keep fixture examples
+  clearly identified and preserve the user's chosen commit identity.
 - Keep `README.md` in English by default. Describe verified behavior accurately,
   preserve third-party notices, and include screenshots with clear provenance.
 
