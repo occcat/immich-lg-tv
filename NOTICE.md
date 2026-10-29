@@ -1,6 +1,6 @@
 # Third-party components
 
-Immich TV is an independent, unofficial, read-only viewer. It is not affiliated
+Immich LG TV is an independent, unofficial, read-only viewer. It is not affiliated
 with Immich, FUTO, LG Electronics, Plex, or the PlxNative authors.
 
 The application source is GPL-3.0-or-later. See LICENSE.
@@ -9,7 +9,7 @@ The application source is GPL-3.0-or-later. See LICENSE.
   [GLinnik21/plx-native](https://github.com/GLinnik21/plx-native), commit
   `6ae7724bd3bb1541090b1799377bc3078a0fb528`, by Gleb Linnik,
   GPL-3.0-or-later. They provide the native media ABI and callback lifecycle
-  adapter. Immich TV adds a declaration for the existing EOS verb and an unload
+  adapter. Immich LG TV adds a declaration for the existing EOS verb and an unload
   acknowledgement accessor; other adapter behavior is retained. LG firmware
   binaries are not redistributed.
 - `vendor/cJSON.c` and `vendor/cJSON.h`: cJSON 1.7.19, Dave Gamble and contributors,
@@ -35,10 +35,14 @@ The application source is GPL-3.0-or-later. See LICENSE.
   the host/television. Their binaries are not distributed in the IPK.
 
 The original UI, icon, API client, worker, mock server and tests in this project
-were implemented for Immich TV. PlxNative's name, logo, splash screen, and
+were implemented for Immich LG TV. PlxNative's name, logo, splash screen, and
 trademark artwork are not reused. Demo photographs are downloaded separately
 from Lorem Picsum/Unsplash; their source records are in
 `fixtures/media/credits.json`. They are not part of the IPK.
 
 API contracts were consulted from the official Immich OpenAPI at tag v3.3.5:
 https://github.com/immich-app/immich/blob/v3.3.5/open-api/immich-openapi-specs.json
+
+- `AGENTS.md` includes the OpenCode contributor guidelines, copied from
+  `anomalyco/opencode` commit `9a9386edbcfc9a32b2c58b002b3f56dff771dec7`.
+  The unmodified reference and MIT terms are in `docs/references/`.

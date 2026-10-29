@@ -38,15 +38,22 @@ flowchart LR
 
 | 文件 | 责任 |
 | --- | --- |
-| `core.c` | 数据类型、API 路径策略、解析、网格移动、本机配置 |
-| `api.c` | 动态加载 libcurl、TLS、认证头、只读端点、Range 读取 |
-| `worker.c` | 图库请求、图片下载与解码；跨页面结果按代次丢弃 |
-| `ui.c` | 页面、焦点、照片查看、幻灯片、缓存与输入行为 |
+| `common.c` / `read-policy.c` | 基础文本、JSON 字段与只读请求白名单 |
+| `config.c` / `catalog.c` / `navigation.c` | 凭据持久化、数据解析与网格几何 |
+| `api.c` / `worker.c` | HTTP 传输、分页与后台图库/图片任务 |
+| `app/catalog.c` | 图库加载、异步结果和 API 翻页状态 |
+| `app/viewer.c` / `app/settings.c` | 媒体状态、返回位置、幻灯片与连接编辑 |
+| `ui/layout.c` / `ui/theme.c` | 共享布局参数、主题和字体规格 |
+| `ui/text.c` / `ui/images.c` / `ui/draw.c` | 渲染缓存、文字对齐与绘图原语 |
+| `ui/chrome.c` / `gallery.c` / `viewer.c` | 导航与图库/全屏页面 |
+| `ui/settings.c` / `keyboard.c` | 连接设置与屏幕键盘页面 |
+| `ui/remote.c` / `pointer.c` | 遥控器和指针输入 |
+| `ui/lifecycle.c` / `screen.c` / `capture.c` | SDL 生命周期、页面组合与截图 |
 | `ui-paint.c` / `vector.c` | 抗锯齿圆角遮罩、SVG 加载与纹理缓存 |
 | `demux.c` | 有界 Range 缓存、FFmpeg 容器解析、Annex B / ADTS、跳转 |
 | `media-webos.c` | 主线程硬件调用、播放状态、暂停、跳转与卸载 |
-| `media.c` / `proxy.c` | 桌面预览；只对 loopback 开放单段视频的临时授权通道 |
-| `main.c` | 生命周期、LG / 桌面不同的 SDL 事件布局、正式 / QA 参数边界 |
+| `media.c` / `proxy.c` | 桌面预览与 loopback 媒体通道 |
+| `main.c` | 生命周期、平台事件与正式 / QA 参数边界 |
 | `vendor/starfish.*` | PlxNative 的 LG ABI 与回调生命周期适配器 |
 
 网络与图片解码不在渲染线程执行。UI 线程拥有 SDL 纹理、窗口和全部硬件播放器调用。
