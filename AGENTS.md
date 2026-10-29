@@ -38,6 +38,10 @@ message. Prefer subjects of at most 72 characters and wrap body paragraphs at
 about 72 characters. Scopes are optional; useful scopes include `ui`, `core`,
 `api`, `media`, `webos`, `docs`, `build`, and `ci`.
 
+Project commit types are `feat`, `fix`, `docs`, `chore`, `refactor`, `test`,
+`build`, `ci`, `perf`, and `revert`. This list overrides the narrower type list
+in the upstream reference so native build and manual-CI changes have clear types.
+
 Example:
 
 ```text
