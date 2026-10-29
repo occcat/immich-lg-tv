@@ -71,7 +71,10 @@ The stable application ID preserves compatibility with earlier installations.
 
 The IPK dynamically links replaceable LGPL FFmpeg libraries. The complete
 corresponding source archive and original build configuration accompany it in
-`dist/`. Distribute these together; see [NOTICE.md](../NOTICE.md).
+`dist/`. The root MIT license covers original project code; the current webOS
+executable remains subject to the GPL-3.0-or-later PlxNative adapter obligations.
+Both license texts are bundled. Distribute the corresponding sources and notices
+together; see [License scope](licensing.md) and [NOTICE.md](../NOTICE.md).
 
 ## Manual GitHub Actions
 

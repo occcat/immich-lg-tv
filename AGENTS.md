@@ -19,6 +19,9 @@ commands and skills apply to OpenCode only, not to this native C/webOS project.
   OpenCode's test-root restriction and `.opencode/skills` requirements do not apply.
 - Use `make host` for desktop builds and `make ipk` plus
   `python3 tools/verify-release.py` for production television packages.
+- Original project contributions are MIT licensed. Preserve upstream licenses;
+  the webOS executable incorporating the PlxNative adapter remains subject to
+  GPL-3.0-or-later. Never describe the combined television binary as MIT-only.
 - Keep test automation behind `ENABLE_QA`; never ship QA launch parameters.
 - CI workflows must use `workflow_dispatch` exclusively. Never add automatic
   push, pull-request, tag, schedule, or dependent-workflow triggers.

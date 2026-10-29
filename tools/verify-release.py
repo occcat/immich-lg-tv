@@ -34,6 +34,10 @@ def main():
         assert all(name.startswith(prefix) and ".." not in name for name in names)
         assert sum("/assets/lib/" in name for name in names) == 3
         assert prefix + "assets/FFmpeg.LGPL-2.1.txt" in names
+        assert tar.extractfile(prefix + "LICENSE").read().startswith(b"MIT License\n")
+        assert prefix + "assets/PlxNative.GPL-3.0.txt" in names
+        notice = tar.extractfile(prefix + "NOTICE.md").read()
+        assert b"MIT" in notice and b"GPL-3.0-or-later" in notice
     checksum = hashlib.sha256(data).hexdigest()
     assert (ROOT / "dist/SHA256SUMS").read_text().split()[0] == checksum
     print(json.dumps({"package": path.name, "sha256": checksum, "bytes": len(data), "native_arm": True, "qa_entry_points": False, "bundled_ffmpeg_libraries": 3}, indent=2))

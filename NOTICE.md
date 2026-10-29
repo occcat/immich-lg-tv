@@ -3,7 +3,15 @@
 Immich LG TV is an independent, unofficial, read-only viewer. It is not affiliated
 with Immich, FUTO, LG Electronics, Plex, or the PlxNative authors.
 
-The application source is GPL-3.0-or-later. See LICENSE.
+Original Immich LG TV code and artwork by occcat are licensed under the MIT
+License in `LICENSE`. Third-party components below retain their own licenses.
+
+The current webOS executable directly incorporates the GPL-3.0-or-later
+PlxNative adapter. Distribution of that combined executable remains subject to
+GPL-3.0-or-later; the MIT grant for original code does not relicense the adapter
+or make the combined executable MIT-only. The GPL text is retained in
+`assets/PlxNative.GPL-3.0.txt` and included in every IPK.
+See [License scope](docs/licensing.md).
 
 - `vendor/starfish.c` and `vendor/starfish.h` are copied from
   [GLinnik21/plx-native](https://github.com/GLinnik21/plx-native), commit

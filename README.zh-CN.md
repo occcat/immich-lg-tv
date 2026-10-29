@@ -126,5 +126,7 @@ HDR、Dolby Vision、Live Photo、AV1/VP9 与多音轨选择不在本版验证�
 当前原生视频窗口绑定要求 webOS 5+；更老型号未经验证。
 开发者模式安装仍需在到期前执行 EXTEND，避免 LG 移除侧载应用。
 
-源代码与第三方组件许可见 [NOTICE.md](NOTICE.md) 与 [LICENSE](LICENSE)。
+本项目原创代码与图形采用 **MIT**，见 [LICENSE](LICENSE)。第三方组件保留各自许可。
+当前电视可执行文件仍包含 GPL-3.0-or-later 的 PlxNative 适配器，因此组合产物仍须遵守 GPL，
+不能将整个电视安装包声明为仅 MIT。详见 [许可范围](docs/licensing.md) 与 [NOTICE.md](NOTICE.md)。
 设计说明见 [DESIGN.md](DESIGN.md)。

@@ -7,7 +7,7 @@
     <img src="https://img.shields.io/badge/native-C11%20%2B%20SDL2-659ad2" alt="Native C11 and SDL2">
     <img src="https://img.shields.io/badge/Immich-read--only-8ccfb2" alt="Read-only Immich access">
     <img src="https://img.shields.io/badge/CI-manual%20only-899ab5" alt="Manual CI only">
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue" alt="GPL-3.0-or-later"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-yellow" alt="MIT license for original project code"></a>
   </p>
   <p>English · <a href="README.zh-CN.md">简体中文</a></p>
 </div>
@@ -145,7 +145,12 @@ Vision, Live Photos, AV1/VP9, and multiple audio-track selection remain unverifi
 
 ## License
 
-GPL-3.0-or-later. See [LICENSE](LICENSE).
+Original project code and artwork are **MIT licensed**. See [LICENSE](LICENSE).
+Third-party components retain their own licenses.
+
+**The current webOS executable is still subject to GPL-3.0-or-later** because it
+incorporates the PlxNative adapter. The MIT license does not relicense that
+adapter or the combined executable. See [License scope](docs/licensing.md).
 
 This is an independent, unofficial client. It is not affiliated with Immich,
 FUTO, LG, Plex, or PlxNative. The native media adapter is derived from
