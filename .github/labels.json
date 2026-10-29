@@ -1,0 +1,15 @@
+[
+  {"name":"bug","color":"d73a4a","description":"Something in Immich LG TV does not work as expected"},
+  {"name":"enhancement","color":"a2eeef","description":"A new feature or improvement to the television client"},
+  {"name":"documentation","color":"0075ca","description":"English documentation, setup guides, or screenshots"},
+  {"name":"refactor","color":"7057ff","description":"Module boundaries, ownership, and internal architecture"},
+  {"name":"tests","color":"bfd4f2","description":"Native regressions, fixture contracts, or visual verification"},
+  {"name":"ci","color":"1d76db","description":"Manually dispatched GitHub Actions and build artifacts"},
+  {"name":"webos","color":"0e8a16","description":"LG webOS packaging, installation, or native platform integration"},
+  {"name":"immich-api","color":"5319e7","description":"Read-only Immich API compatibility and authentication"},
+  {"name":"ui","color":"c5def5","description":"TV layouts, SVG icons, typography, focus, and remote navigation"},
+  {"name":"playback","color":"f9d0c4","description":"Photo slideshows, demuxing, and native hardware video playback"},
+  {"name":"security","color":"b60205","description":"Credential handling, TLS, permissions, and read-only guarantees"},
+  {"name":"good first issue","color":"7057ff","description":"A focused, approachable contribution to Immich LG TV"},
+  {"name":"help wanted","color":"008672","description":"Additional device, Immich server, or codec verification is welcome"}
+]

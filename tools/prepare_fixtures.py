@@ -5,6 +5,7 @@ These are test fixtures, never uploaded to an Immich account. The app package
 does not contain the fixtures or a household's server address.
 """
 from concurrent.futures import ThreadPoolExecutor
+from argparse import ArgumentParser
 from pathlib import Path
 import json
 import subprocess
@@ -15,12 +16,14 @@ ROOT = Path(__file__).resolve().parent.parent
 MEDIA = ROOT / "fixtures" / "media"
 PHOTO_IDS = [1018, 1015, 1016, 1036, 1040, 1056, 1067, 1039, 1043, 1044, 1050, 1051, 1061, 1065, 1074, 1084, 1080, 1025, 1024, 1020]
 
-def prepare(item):
+def prepare(item, offline=False):
     index, photo = item
     full = MEDIA / f"photo-{index:02d}.jpg"
     if not full.exists():
         url = f"https://picsum.photos/id/{photo}/1920/1080"
         try:
+            if offline:
+                raise OSError("Offline fixtures requested")
             with urllib.request.urlopen(url, timeout=40) as response: full.write_bytes(response.read())
         except Exception:
             # Deterministic offline fallback; clearly identified as a test image.
@@ -38,8 +41,12 @@ def prepare(item):
     return {"file": full.name, "source": f"https://picsum.photos/id/{photo}/info", "provider": "Lorem Picsum / Unsplash"}
 
 def main():
+    parser = ArgumentParser()
+    parser.add_argument("--offline", action="store_true", help="Generate deterministic synthetic images without network access")
+    args = parser.parse_args()
     MEDIA.mkdir(parents=True, exist_ok=True)
-    with ThreadPoolExecutor(max_workers=4) as pool: credits = list(pool.map(prepare, enumerate(PHOTO_IDS)))
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        credits = list(pool.map(lambda item: prepare(item, args.offline), enumerate(PHOTO_IDS)))
     (MEDIA / "credits.json").write_text(json.dumps(credits, indent=2) + "\n")
     video = MEDIA / "sample.mp4"
     if not video.exists():

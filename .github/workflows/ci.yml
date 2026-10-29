@@ -1,0 +1,81 @@
+name: Manual CI
+
+"on":
+  workflow_dispatch:
+    inputs:
+      build_tv:
+        description: Build the ARM webOS IPK after native tests pass
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: manual-ci-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  native:
+    name: Native build, tests and screenshots
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13'
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libcurl4-openssl-dev libavformat-dev libavcodec-dev libavutil-dev ffmpeg
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements-dev.txt
+      - name: Prepare deterministic offline fixtures
+        run: make fixtures FIXTURE_ARGS=--offline
+      - name: Validate repository configuration
+        run: .venv/bin/python tools/check-repository.py
+      - name: Build and test the native client
+        run: make test
+      - name: Capture real SDL screens
+        run: .venv/bin/python tools/capture-screenshots.py --output .local/ci-screenshots
+      - name: Upload native QA screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: immich-lg-tv-native-screenshots
+          path: .local/ci-screenshots/
+          if-no-files-found: ignore
+          include-hidden-files: true
+          retention-days: 14
+
+  webos:
+    name: ARM webOS package
+    if: inputs.build_tv
+    needs: native
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.13'
+      - name: Install checksum-pinned webOS toolchain
+        run: |
+          brew install pkgconf
+          python tools/setup-sdk.py
+      - name: Build and verify production IPK
+        run: |
+          make ipk PYTHON=python
+          python tools/verify-release.py
+      - name: Upload IPK and corresponding FFmpeg sources
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: immich-lg-tv-webos-package
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
